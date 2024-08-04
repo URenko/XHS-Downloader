@@ -1,4 +1,3 @@
-from .browser import BrowserCookie
 from .converter import Converter
 from .namespace import Namespace
 from .truncate import beautify_string
