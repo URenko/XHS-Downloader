@@ -173,8 +173,6 @@ class Manager:
         await self.request_client.aclose()
         await self.download_client.aclose()
         # self.__clean()
-        remove_empty_directories(self.root)
-        remove_empty_directories(self.folder)
 
     def __check_name_format(self, format_: str) -> str:
         keys = format_.split()
