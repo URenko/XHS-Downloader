@@ -11,19 +11,14 @@ from urllib.parse import urlparse
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 # from aiohttp import web
-from pyperclip import paste
 from uvicorn import Config
 from uvicorn import Server
 
-from source.expansion import BrowserCookie
-from source.expansion import Cleaner
 from source.expansion import Converter
 from source.expansion import Namespace
 from source.expansion import beautify_string
-from source.module import DataRecorder
 from source.module import ExtractData
 from source.module import ExtractParams
-from source.module import IDRecorder
 from source.module import Manager
 from source.module import (
     ROOT,
@@ -68,7 +63,6 @@ class XHS:
     SHORT = compile(r"https?://xhslink\.com/\S+")
     ID = compile(r"(?:explore|item)/(\S+)?\?")
     __INSTANCE = None
-    CLEANER = Cleaner()
 
     def __new__(cls, *args, **kwargs):
         if not cls.__INSTANCE:
@@ -126,8 +120,6 @@ class XHS:
         self.explore = Explore()
         self.convert = Converter()
         self.download = Download(self.manager)
-        self.id_recorder = IDRecorder(self.manager)
-        self.data_recorder = DataRecorder(self.manager)
         self.clipboard_cache: str = ""
         self.queue = Queue()
         self.event = Event()
@@ -176,11 +168,9 @@ class XHS:
         data["采集时间"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         data["下载地址"] = " ".join(data["下载地址"])
         data["动图地址"] = " ".join(i or "NaN" for i in data["动图地址"])
-        await self.data_recorder.add(**data)
 
-    async def __add_record(self, id_: str, result: list) -> None:
-        if all(result):
-            await self.id_recorder.add(id_)
+    async def __add_record(self, id_: str, result: tuple) -> None:
+        pass
 
     async def extract(
             self,
@@ -269,7 +259,8 @@ class XHS:
             self.__extract_image(data, namespace)
         else:
             data["下载地址"] = []
-        await self.__download_files(data, download, index, log, bar)
+        if download:
+            await self.__download_files(data, download, index, log, bar)
         logging(log, _("作品处理完成：{0}").format(i))
         await sleep_time()
         return data
@@ -356,16 +347,12 @@ class XHS:
         self.event.set()
 
     async def skip_download(self, id_: str) -> bool:
-        return bool(await self.id_recorder.select(id_))
+        return False
 
     async def __aenter__(self):
-        await self.id_recorder.__aenter__()
-        await self.data_recorder.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
-        await self.id_recorder.__aexit__(exc_type, exc_value, traceback)
-        await self.data_recorder.__aexit__(exc_type, exc_value, traceback)
         await self.close()
 
     async def close(self):

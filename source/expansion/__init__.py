@@ -1,5 +1,3 @@
-from .browser import BrowserCookie
-from .cleaner import Cleaner
 from .converter import Converter
 from .error import CacheError
 from .file_folder import file_switch
